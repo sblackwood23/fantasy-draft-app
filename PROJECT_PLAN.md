@@ -3,7 +3,7 @@
 ## Project Purpose
 Real-time fantasy draft application built as Portfolio Project #1 to demonstrate backend development capabilities for transitioning into backend/full-stack roles in the Denver area.
 
-**Target Completion:** March 2026 (Players Championship)
+**Target Completion:** 4 weeks to MVP (Late February 2026)
 
 ## Why This Project?
 - Demonstrate real-time systems (WebSockets)
@@ -62,14 +62,14 @@ Real-time fantasy draft application built as Portfolio Project #1 to demonstrate
    - Real-time updates when players are drafted
    - Support for draft stipulations (e.g., "must draft an amateur", "must draft someone from outside US")
 
-4. **Admin Event Management**
-   - Create new events
-   - Upload player pool (CSV or manual entry)
+4. **Event Setup** (via local scripts)
+   - Seed data scripts to create events
+   - Configure player pool via seed scripts
    - Configure draft settings:
      - Number of teams and draft timer duration
      - Max picks per team (e.g., 6 players)
      - Max teams that can draft the same player (1 for traditional, 2+ for Ryder Cup style)
-   - Start/pause/reset drafts
+   - Start/pause/reset drafts via API
    - View draft results
 
 5. **Group Access**
@@ -120,43 +120,49 @@ Each event/draft supports configurable rules to accommodate different draft styl
 
 ## Development Phases
 
-### Phase 1: Foundation (Weeks 1-2)
-- [ ] Initialize Go project structure
-- [ ] Set up PostgreSQL database (local dev + Render)
-- [ ] Create database schema and migrations
-- [ ] Implement basic REST API (health check, CRUD for events)
-- [ ] Set up React project with basic routing
-- [ ] Deploy "hello world" to Render to validate hosting
+### Phase 1: Backend Foundation (Weeks 1-2)
+- [x] Initialize Go project structure
+- [x] Set up PostgreSQL database locally
+- [x] Create database schema and migrations
+- [x] Implement Go models for all entities
+- [x] Build CRUD endpoints for Events, Players, Users
+- [x] Organize routes in separate file
+- [x] Add CORS middleware for frontend integration
+- [x] Create database seed scripts with sample data
+- [ ] Add input validation to endpoints
+- [ ] Write unit tests for repositories
 
-### Phase 2: Core Backend (Weeks 3-4)
-- [ ] Build player management endpoints
-- [ ] Implement draft room creation/configuration
+### Phase 2: Draft Logic & WebSockets (Weeks 2-3)
+- [ ] Design draft state machine
 - [ ] Create WebSocket server infrastructure
-- [ ] Draft state machine logic
-- [ ] Write unit tests for business logic
-- [ ] Database seed scripts and reset utilities
-
-### Phase 3: Real-time Features (Weeks 5-6)
-- [ ] WebSocket draft room implementation
-- [ ] Turn management and timer logic
+- [ ] Implement draft room creation/joining
+- [ ] Build turn management and timer logic
 - [ ] Real-time player selection sync
-- [ ] Reconnection handling
+- [ ] Prevent race conditions in concurrent picks
+- [ ] Reconnection handling for dropped connections
+- [ ] Persist draft results to database
+- [ ] Update event status (not_started → in_progress → completed)
 - [ ] Integration testing for WebSocket flows
 
-### Phase 4: Frontend Development (Weeks 7-8)
-- [ ] Admin dashboard (create events, upload players)
-- [ ] Draft room UI
+### Phase 3: Frontend Development (Weeks 3-4)
+- [ ] Set up React project with Vite
+- [ ] Create basic routing and layout
+- [ ] Draft room UI with WebSocket connection
 - [ ] Player board with search/filter/sort
-- [ ] Real-time updates via WebSocket
+- [ ] Team roster display (live updates)
+- [ ] Draft timer and turn indicator
+- [ ] Real-time updates when players are drafted
 - [ ] Mobile-responsive design
+- [ ] Handle reconnection gracefully
 
-### Phase 5: Polish & Deploy (Weeks 9-10)
+### Phase 4: Polish & Deploy (Week 4)
 - [ ] End-to-end testing with real draft scenarios
-- [ ] Performance optimization
+- [ ] Performance optimization (sub-100ms responses)
 - [ ] Error handling and user feedback
-- [ ] Documentation (README, API docs)
-- [ ] Production deployment
+- [ ] Documentation (README, API docs, setup instructions)
+- [ ] Deploy to Render (backend + frontend + database)
 - [ ] Test with friends (dry run before Players Championship)
+- [ ] Final polish based on feedback
 
 ---
 
@@ -260,4 +266,4 @@ Each event/draft supports configurable rules to accommodate different draft styl
 
 ---
 
-**Last Updated:** January 28, 2026
+**Last Updated:** January 29, 2026
