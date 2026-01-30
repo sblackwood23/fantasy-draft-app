@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/sblackwood23/fantasy-draft-app/internal/database"
+	"github.com/sblackwood23/fantasy-draft-app/internal/draft"
 	"github.com/sblackwood23/fantasy-draft-app/internal/handlers"
 )
 
@@ -23,6 +24,9 @@ func setupRoutes(r *chi.Mux, db *database.DB, eventHandler *handlers.EventHandle
 
 	// Health check
 	r.Get("/health", healthCheckHandler(db))
+
+	// WebSocket route for draft
+	r.Get("/ws/draft", draft.HandleWebSocket)
 
 	// Events routes
 	r.Get("/events/{id}", eventHandler.GetEvent)
