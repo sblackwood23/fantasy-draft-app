@@ -34,3 +34,8 @@ go.work.sum
 # Air - Live reload for Go
 backend/tmp/
 backend/build-errors.log
+
+# Go binaries
+backend/server
+backend/cmd/server/server
+backend/cmd/seed/seed
