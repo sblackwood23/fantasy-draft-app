@@ -5,29 +5,41 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/coder/websocket"
 )
 
-var manager *Manager
-var draftState *DraftState = nil // Lazily instantiate
+// DraftService manages WebSocket connections and draft state
+type DraftService struct {
+	manager *Manager
+	state   *DraftState
+	mu      sync.RWMutex // protects state
+}
 
-// Set up the manager once the package is loaded
-func init() {
-	manager = NewManager()
-	go manager.Run()
+// NewDraftService creates a new DraftService and starts the manager
+func NewDraftService() *DraftService {
+	s := &DraftService{
+		manager: NewManager(),
+	}
+	go s.manager.Run()
+	return s
 }
 
 // CreateRoom creates a new draft room for the given event with available players
-func CreateRoom(eventID int, playerIDs []int) error {
-	draftState = NewDraftState(eventID)
-	draftState.SetAvailablePlayers(playerIDs)
+func (s *DraftService) CreateRoom(eventID int, playerIDs []int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.state = NewDraftState(eventID)
+	s.state.SetAvailablePlayers(playerIDs)
 	return nil
 }
 
 // GetRoom returns the current draft room state
-func GetRoom() *DraftState {
-	return draftState
+func (s *DraftService) GetRoom() *DraftState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.state
 }
 
 // Client represents a WebSocket client connection
@@ -36,8 +48,17 @@ type Client struct {
 	Send chan []byte // Buffered channel for outgoing messages
 }
 
+// SendError sends an error message to this client
+func (c *Client) SendError(message string) {
+	errMsg, _ := json.Marshal(map[string]string{
+		"type":  "error",
+		"error": message,
+	})
+	c.Send <- errMsg
+}
+
 // HandleWebSocket upgrades HTTP connection to WebSocket and handles messages
-func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+func (s *DraftService) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Upgrade HTTP connection to WebSocket
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		// Allow all origins for development (file:// and localhost)
@@ -58,20 +79,19 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		Send: make(chan []byte, 256), // Buffered channel
 	}
 	// Register client with the draft manager
-	manager.Register(client)
+	s.manager.Register(client)
 
 	// Start write pump in separate goroutine
-	go client.writePump(r.Context())
+	go s.writePump(r.Context(), client)
 
 	// Start read pump (blocks here until connection closes)
-	client.readPump(r.Context())
+	s.readPump(r.Context(), client)
 }
 
 // readPump handles incoming messages from the client
-func (c *Client) readPump(ctx context.Context) {
+func (s *DraftService) readPump(ctx context.Context, c *Client) {
 	defer func() {
-		manager.Unregister(c) // Unregister client
-		close(c.Send)         // Close send channel when done
+		s.manager.Unregister(c) // Unregister client
 		c.Conn.Close(websocket.StatusNormalClosure, "connection closed")
 		log.Println("Client disconnected")
 	}()
@@ -96,12 +116,12 @@ func (c *Client) readPump(ctx context.Context) {
 		log.Printf("Received message: %s", string(data))
 
 		// Handle the message
-		c.handleMessage(data)
+		s.handleMessage(c, data)
 	}
 }
 
 // writePump handles outgoing messages to the client
-func (c *Client) writePump(ctx context.Context) {
+func (s *DraftService) writePump(ctx context.Context, c *Client) {
 	// Write loop - wait for messages from Send channel
 	for msg := range c.Send {
 		// Write message to client
@@ -113,34 +133,24 @@ func (c *Client) writePump(ctx context.Context) {
 	}
 }
 
-// handleMessage processes incoming messages (currently just echoes back)
-func (c *Client) handleMessage(data []byte) {
-	// Parse message as JSON to validate format
-	var msg map[string]interface{}
+// handleMessage routes incoming messages to appropriate handlers
+func (s *DraftService) handleMessage(c *Client, data []byte) {
+	// Parse message to extract type
+	var msg struct {
+		Type string `json:"type"`
+	}
 	if err := json.Unmarshal(data, &msg); err != nil {
-		// Send error back to client
-		errMsg := map[string]string{
-			"type":  "error",
-			"error": "invalid JSON format",
-		}
-		errData, _ := json.Marshal(errMsg)
-		c.Send <- errData // Push to send channel (non-blocking)
+		c.SendError("invalid JSON format")
 		return
 	}
 
-	// Echo the message back (for now)
-	response := map[string]interface{}{
-		"type":    "echo",
-		"message": "Message received",
-		"data":    msg,
+	// Route to appropriate handler based on message type
+	switch msg.Type {
+	case MsgTypeStartDraft:
+		s.handleStartDraft(c, data)
+	case MsgTypeMakePick:
+		s.handleMakePick(c, data)
+	default:
+		c.SendError("unknown message type: " + msg.Type)
 	}
-
-	responseData, err := json.Marshal(response)
-	if err != nil {
-		log.Printf("Failed to marshal response: %v", err)
-		return
-	}
-
-	// Broadcast response to all clients
-	manager.Broadcast(responseData)
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/sblackwood23/fantasy-draft-app/internal/database"
+	"github.com/sblackwood23/fantasy-draft-app/internal/draft"
 	"github.com/sblackwood23/fantasy-draft-app/internal/handlers"
 	"github.com/sblackwood23/fantasy-draft-app/internal/repository"
 )
@@ -28,21 +29,29 @@ func main() {
 
 	fmt.Println("Database connected successfully")
 
-	// Initialize repositories and handlers
+	// Initialize repositories
 	eventRepo := repository.NewEventRepository(db.Pool)
-	eventHandler := handlers.NewEventHandler(eventRepo)
 	playerRepo := repository.NewPlayerRepository(db.Pool)
-	playerHandler := handlers.NewPlayerHandler(playerRepo)
 	userRepo := repository.NewUserRepository(db.Pool)
-	userHandler := handlers.NewUserHandler(userRepo)
 	eventPlayerRepo := repository.NewEventPlayerRepository(db.Pool)
-	eventPlayerHandler := handlers.NewEventPlayerHandler(eventPlayerRepo)
-	draftRoomHandler := handlers.NewDraftRoomHandler(eventPlayerRepo)
+
+	// Initialize services
+	draftService := draft.NewDraftService()
+
+	// Initialize dependencies
+	deps := &Dependencies{
+		Event:       handlers.NewEventHandler(eventRepo),
+		Player:      handlers.NewPlayerHandler(playerRepo),
+		User:        handlers.NewUserHandler(userRepo),
+		EventPlayer: handlers.NewEventPlayerHandler(eventPlayerRepo),
+		DraftRoom:   handlers.NewDraftRoomHandler(eventPlayerRepo, draftService),
+		Draft:       draftService,
+	}
 
 	r := chi.NewRouter()
 
 	// Setup all routes
-	setupRoutes(r, db, eventHandler, playerHandler, userHandler, eventPlayerHandler, draftRoomHandler)
+	setupRoutes(r, db, deps)
 
 	// Start server
 	port := ":8080"
