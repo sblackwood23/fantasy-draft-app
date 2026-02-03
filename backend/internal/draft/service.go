@@ -98,6 +98,9 @@ func (s *DraftService) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Start write pump in separate goroutine
 	go s.writePump(r.Context(), client)
 
+	// Send current draft state if there's an active draft (for reconnection)
+	s.sendStateToClient(client)
+
 	// Start read pump (blocks here until connection closes)
 	s.readPump(r.Context(), client)
 }
@@ -171,4 +174,38 @@ func (s *DraftService) handleMessage(c *Client, data []byte) {
 	default:
 		c.SendError("unknown message type: " + msg.Type)
 	}
+}
+
+// sendStateToClient sends the current draft state to a newly connected client
+// This enables reconnection - clients joining mid-draft receive the full state
+func (s *DraftService) sendStateToClient(c *Client) {
+	s.mu.RLock()
+	state := s.state
+	s.mu.RUnlock()
+
+	if state == nil {
+		return // No draft room exists
+	}
+
+	snapshot := state.GetSnapshot()
+	if snapshot.Status == StatusNotStarted {
+		return // Draft exists but hasn't started yet
+	}
+
+	msg, _ := json.Marshal(map[string]interface{}{
+		"type":             MsgTypeDraftState,
+		"eventID":          snapshot.EventID,
+		"status":           snapshot.Status,
+		"currentTurn":      snapshot.CurrentTurn,
+		"roundNumber":      snapshot.RoundNumber,
+		"currentPickIndex": snapshot.CurrentPickIndex,
+		"totalRounds":      snapshot.TotalRounds,
+		"pickOrder":        snapshot.PickOrder,
+		"availablePlayers": snapshot.AvailablePlayers,
+		"turnDeadline":     snapshot.TurnDeadline,
+		"remainingTime":    snapshot.RemainingTime,
+		"pickHistory":      snapshot.PickHistory,
+	})
+	c.Send <- msg
+	log.Printf("Sent draft state to reconnecting client (status: %s)", snapshot.Status)
 }

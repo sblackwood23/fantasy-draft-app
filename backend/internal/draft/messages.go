@@ -23,6 +23,7 @@ const (
 	MsgTypeDraftPaused    = "draft_paused"
 	MsgTypeDraftResumed   = "draft_resumed"
 	MsgTypeDraftCompleted = "draft_completed"
+	MsgTypeDraftState     = "draft_state" // Sent to reconnecting clients
 	MsgTypePickMade       = "pick_made"
 	MsgTypeTurnChanged    = "turn_changed"
 	MsgTypeError          = "error"
