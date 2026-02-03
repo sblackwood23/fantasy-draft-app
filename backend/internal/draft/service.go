@@ -164,6 +164,10 @@ func (s *DraftService) handleMessage(c *Client, data []byte) {
 		s.handleStartDraft(c, data)
 	case MsgTypeMakePick:
 		s.handleMakePick(c, data)
+	case MsgTypePauseDraft:
+		s.handlePauseDraft(c)
+	case MsgTypeResumeDraft:
+		s.handleResumeDraft(c)
 	default:
 		c.SendError("unknown message type: " + msg.Type)
 	}

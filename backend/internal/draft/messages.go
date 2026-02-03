@@ -13,6 +13,19 @@ import (
 const (
 	MsgTypeStartDraft = "start_draft"
 	MsgTypeMakePick   = "make_pick"
+	MsgTypePauseDraft = "pause_draft"
+	MsgTypeResumeDraft = "resume_draft"
+)
+
+// Outgoing message types (to client)
+const (
+	MsgTypeDraftStarted   = "draft_started"
+	MsgTypeDraftPaused    = "draft_paused"
+	MsgTypeDraftResumed   = "draft_resumed"
+	MsgTypeDraftCompleted = "draft_completed"
+	MsgTypePickMade       = "pick_made"
+	MsgTypeTurnChanged    = "turn_changed"
+	MsgTypeError          = "error"
 )
 
 // StartDraftMessage represents the payload for starting a draft
@@ -97,6 +110,44 @@ func (s *DraftService) handleMakePick(c *Client, data []byte) {
 		c.SendError(err.Error())
 		return
 	}
+}
+
+// handlePauseDraft pauses an in-progress draft
+func (s *DraftService) handlePauseDraft(c *Client) {
+	s.mu.RLock()
+	state := s.state
+	s.mu.RUnlock()
+
+	if state == nil {
+		c.SendError("no draft in progress")
+		return
+	}
+
+	if err := state.PauseDraft(); err != nil {
+		c.SendError(err.Error())
+		return
+	}
+
+	log.Printf("Draft paused for event %d", state.GetEventID())
+}
+
+// handleResumeDraft resumes a paused draft
+func (s *DraftService) handleResumeDraft(c *Client) {
+	s.mu.RLock()
+	state := s.state
+	s.mu.RUnlock()
+
+	if state == nil {
+		c.SendError("no draft in progress")
+		return
+	}
+
+	if err := state.ResumeDraft(); err != nil {
+		c.SendError(err.Error())
+		return
+	}
+
+	log.Printf("Draft resumed for event %d", state.GetEventID())
 }
 
 // startOutgoingBridge reads from the draft state's outgoing channel and broadcasts to all clients

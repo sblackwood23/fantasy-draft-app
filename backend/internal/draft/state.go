@@ -14,6 +14,7 @@ type DraftStatus string
 const (
 	StatusNotStarted DraftStatus = "not_started"
 	StatusInProgress DraftStatus = "in_progress"
+	StatusPaused     DraftStatus = "paused"
 	StatusCompleted  DraftStatus = "completed"
 )
 
@@ -41,6 +42,7 @@ type DraftState struct {
 	currentPickIndex int             // Current position in pickOrder
 	timerDuration    time.Duration   // How long each user has to pick
 	turnDeadline     time.Time       // When the current turn expires (for client countdown)
+	remainingTime    time.Duration   // Time remaining when paused (for resume)
 	totalRounds      int             // Total rounds in the draft (picks per team)
 	availablePlayers []int           // Player IDs available to draft
 }
@@ -77,11 +79,11 @@ func (d *DraftState) StartDraft(pickOrder []int, totalRounds int, timerDuration 
 	d.draftStatus = StatusInProgress
 
 	// Start the pick timer (sets turnDeadline)
-	d.startTimer()
+	d.startTimer(d.timerDuration)
 
 	// Emit draft started message
 	msg, _ := json.Marshal(map[string]interface{}{
-		"type":         "draft_started",
+		"type":         MsgTypeDraftStarted,
 		"eventID":      d.eventID,
 		"currentTurn":  d.currentTurnID,
 		"roundNumber":  d.roundNumber,
@@ -92,15 +94,15 @@ func (d *DraftState) StartDraft(pickOrder []int, totalRounds int, timerDuration 
 	return nil
 }
 
-// startTimer starts the countdown for the current pick
-func (d *DraftState) startTimer() {
+// startTimer starts the countdown for the current pick with the given duration
+func (d *DraftState) startTimer(duration time.Duration) {
 	// Stop existing timer if any
 	if d.pickTimer != nil {
 		d.pickTimer.Stop()
 	}
 
-	d.turnDeadline = time.Now().Add(d.timerDuration)
-	d.pickTimer = time.NewTimer(d.timerDuration)
+	d.turnDeadline = time.Now().Add(duration)
+	d.pickTimer = time.NewTimer(duration)
 
 	// Wait for timer in a goroutine
 	go func() {
@@ -142,7 +144,7 @@ func (d *DraftState) handleTimerExpired() {
 
 	// Emit auto-draft pick message
 	msg, _ := json.Marshal(map[string]interface{}{
-		"type":       "pick_made",
+		"type":       MsgTypePickMade,
 		"userID":     userID,
 		"playerID":   playerID,
 		"pickNumber": pickResult.PickNumber,
@@ -189,11 +191,11 @@ func (d *DraftState) advanceTurn() {
 	d.currentTurnID = d.pickOrder[positionInRound]
 
 	// Restart timer for next pick
-	d.startTimer()
+	d.startTimer(d.timerDuration)
 
 	// Emit turn changed message
 	msg, _ := json.Marshal(map[string]interface{}{
-		"type":         "turn_changed",
+		"type":         MsgTypeTurnChanged,
 		"currentTurn":  d.currentTurnID,
 		"roundNumber":  d.roundNumber,
 		"turnDeadline": d.turnDeadline.Unix(),
@@ -212,7 +214,7 @@ func (d *DraftState) completeDraft() {
 
 	// Emit draft completed message
 	msg, _ := json.Marshal(map[string]interface{}{
-		"type":        "draft_completed",
+		"type":        MsgTypeDraftCompleted,
 		"eventID":     d.eventID,
 		"totalPicks":  d.currentPickIndex,
 		"totalRounds": d.totalRounds,
@@ -261,7 +263,7 @@ func (d *DraftState) MakePick(userID, playerID int) (*PickResult, error) {
 
 	// Emit pick made message
 	msg, _ := json.Marshal(map[string]interface{}{
-		"type":       "pick_made",
+		"type":       MsgTypePickMade,
 		"userID":     userID,
 		"playerID":   playerID,
 		"pickNumber": pickResult.PickNumber,
@@ -277,6 +279,62 @@ func (d *DraftState) MakePick(userID, playerID int) (*PickResult, error) {
 	d.advanceTurn()
 
 	return pickResult, nil
+}
+
+// PauseDraft pauses the draft, stopping the timer and saving remaining time
+func (d *DraftState) PauseDraft() error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.draftStatus != StatusInProgress {
+		return fmt.Errorf("can only pause an in-progress draft")
+	}
+
+	// Calculate remaining time before stopping timer
+	d.remainingTime = max(time.Until(d.turnDeadline), 0)
+
+	// Stop the timer
+	if d.pickTimer != nil {
+		d.pickTimer.Stop()
+	}
+
+	d.draftStatus = StatusPaused
+
+	// Emit draft paused message
+	msg, _ := json.Marshal(map[string]interface{}{
+		"type":          MsgTypeDraftPaused,
+		"eventID":       d.eventID,
+		"remainingTime": d.remainingTime.Seconds(),
+	})
+	d.outgoing <- msg
+
+	return nil
+}
+
+// ResumeDraft resumes a paused draft, restarting the timer with remaining time
+func (d *DraftState) ResumeDraft() error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.draftStatus != StatusPaused {
+		return fmt.Errorf("can only resume a paused draft")
+	}
+
+	d.draftStatus = StatusInProgress
+
+	// Restart timer with remaining time
+	d.startTimer(d.remainingTime)
+
+	// Emit draft resumed message
+	msg, _ := json.Marshal(map[string]interface{}{
+		"type":         MsgTypeDraftResumed,
+		"eventID":      d.eventID,
+		"currentTurn":  d.currentTurnID,
+		"turnDeadline": d.turnDeadline.Unix(),
+	})
+	d.outgoing <- msg
+
+	return nil
 }
 
 // isPlayerAvailable checks if a player is still available to draft
