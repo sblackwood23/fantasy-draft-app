@@ -129,6 +129,26 @@ Makes a pick during the draft.
 | `userID` | number | ID of the user making the pick |
 | `playerID` | number | ID of the player being drafted |
 
+### `pause_draft`
+
+Pauses an in-progress draft.
+
+```json
+{
+  "type": "pause_draft"
+}
+```
+
+### `resume_draft`
+
+Resumes a paused draft.
+
+```json
+{
+  "type": "resume_draft"
+}
+```
+
 ---
 
 ## WebSocket Messages: Server to Client
@@ -213,6 +233,83 @@ Broadcast when the draft finishes.
 | `totalPicks` | number | Total number of picks made |
 | `totalRounds` | number | Total rounds in the draft |
 
+### `draft_paused`
+
+Broadcast when a draft is paused.
+
+```json
+{
+  "type": "draft_paused",
+  "eventID": 1,
+  "remainingTime": 45.5
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `eventID` | number | ID of the event |
+| `remainingTime` | number | Seconds remaining on the turn timer when paused |
+
+### `draft_resumed`
+
+Broadcast when a paused draft resumes.
+
+```json
+{
+  "type": "draft_resumed",
+  "eventID": 1,
+  "currentTurn": 2,
+  "roundNumber": 1,
+  "turnDeadline": 1704067320
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `eventID` | number | ID of the event |
+| `currentTurn` | number | User ID whose turn it is |
+| `roundNumber` | number | Current round number |
+| `turnDeadline` | number | Unix timestamp when the turn expires |
+
+### `draft_state`
+
+Sent to newly connected clients during an active draft (for reconnection sync).
+
+```json
+{
+  "type": "draft_state",
+  "eventID": 1,
+  "status": "in_progress",
+  "currentTurn": 2,
+  "roundNumber": 1,
+  "currentPickIndex": 3,
+  "totalRounds": 5,
+  "pickOrder": [1, 2, 3, 4],
+  "availablePlayers": [5, 6, 7, 8, 9, 10],
+  "turnDeadline": 1704067320,
+  "remainingTime": 0,
+  "pickHistory": [
+    {"userID": 1, "playerID": 1, "pickNumber": 1, "round": 1, "autoDraft": false},
+    {"userID": 2, "playerID": 2, "pickNumber": 2, "round": 1, "autoDraft": false},
+    {"userID": 3, "playerID": 3, "pickNumber": 3, "round": 1, "autoDraft": true}
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `eventID` | number | ID of the event |
+| `status` | string | Draft status: `in_progress`, `paused`, or `completed` |
+| `currentTurn` | number | User ID whose turn it is |
+| `roundNumber` | number | Current round number |
+| `currentPickIndex` | number | Current position in pick sequence (0-indexed) |
+| `totalRounds` | number | Total rounds in the draft |
+| `pickOrder` | number[] | Array of user IDs in draft order |
+| `availablePlayers` | number[] | Array of player IDs still available |
+| `turnDeadline` | number | Unix timestamp when the turn expires |
+| `remainingTime` | number | Seconds remaining (used when paused) |
+| `pickHistory` | object[] | Array of all picks made so far |
+
 ### `error`
 
 Sent to a single client when an error occurs.
@@ -233,13 +330,23 @@ Sent to a single client when an error occurs.
 ## Draft Flow
 
 1. Clients connect to `/ws/draft`
-2. Admin sends `start_draft` with configuration
-3. Server broadcasts `draft_started` to all clients
-4. Current user sends `make_pick` before timer expires
-5. Server broadcasts `pick_made` and `turn_changed`
-6. If timer expires, server auto-drafts and broadcasts `pick_made` with `autoDraft: true`
-7. Repeat until all rounds complete
-8. Server broadcasts `draft_completed`
+2. **If draft already in progress:** Server sends `draft_state` to the connecting client
+3. Admin sends `start_draft` with configuration
+4. Server broadcasts `draft_started` to all clients
+5. Current user sends `make_pick` before timer expires
+6. Server broadcasts `pick_made` and `turn_changed`
+7. If timer expires, server auto-drafts and broadcasts `pick_made` with `autoDraft: true`
+8. Optionally, admin can send `pause_draft` / `resume_draft` to control the draft
+9. Repeat until all rounds complete
+10. Server broadcasts `draft_completed`
+
+## Reconnection
+
+Clients connecting mid-draft automatically receive the full draft state via `draft_state` message. This includes:
+- Current turn and round information
+- Timer deadline (or remaining time if paused)
+- List of available players
+- Complete pick history for rebuilding the draft board
 
 ## Snake Draft Order
 
