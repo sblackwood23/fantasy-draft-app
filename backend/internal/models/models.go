@@ -49,11 +49,11 @@ func (s *Stipulations) Scan(value interface{}) error {
 
 // Player represents a player in the draft pool
 type Player struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Status    string `json:"status"`
-	Country   string `json:"country"`
+	ID          int    `json:"id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Status      string `json:"status"`
+	CountryCode string `json:"country_code"`
 }
 
 // User represents a team/participant in the draft

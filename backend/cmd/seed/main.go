@@ -49,21 +49,21 @@ func main() {
 
 	// Seed players
 	players := []models.Player{
-		{FirstName: "Tiger", LastName: "Woods", Status: "professional", Country: "USA"},
-		{FirstName: "Rory", LastName: "McIlroy", Status: "professional", Country: "Ireland"},
-		{FirstName: "Jon", LastName: "Rahm", Status: "professional", Country: "Spain"},
-		{FirstName: "Scottie", LastName: "Scheffler", Status: "professional", Country: "USA"},
-		{FirstName: "Brooks", LastName: "Koepka", Status: "professional", Country: "USA"},
-		{FirstName: "Viktor", LastName: "Hovland", Status: "professional", Country: "Norway"},
-		{FirstName: "Xander", LastName: "Schauffele", Status: "professional", Country: "USA"},
-		{FirstName: "Patrick", LastName: "Cantlay", Status: "professional", Country: "USA"},
-		{FirstName: "Collin", LastName: "Morikawa", Status: "professional", Country: "USA"},
-		{FirstName: "Justin", LastName: "Thomas", Status: "professional", Country: "USA"},
-		{FirstName: "Jordan", LastName: "Spieth", Status: "professional", Country: "USA"},
-		{FirstName: "Hideki", LastName: "Matsuyama", Status: "professional", Country: "Japan"},
-		{FirstName: "Dustin", LastName: "Johnson", Status: "professional", Country: "USA"},
-		{FirstName: "Matt", LastName: "Fitzpatrick", Status: "professional", Country: "England"},
-		{FirstName: "Shane", LastName: "Lowry", Status: "professional", Country: "Ireland"},
+		{FirstName: "Tiger", LastName: "Woods", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Rory", LastName: "McIlroy", Status: "professional", CountryCode: "NIR"},
+		{FirstName: "Jon", LastName: "Rahm", Status: "professional", CountryCode: "ESP"},
+		{FirstName: "Scottie", LastName: "Scheffler", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Brooks", LastName: "Koepka", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Viktor", LastName: "Hovland", Status: "professional", CountryCode: "NOR"},
+		{FirstName: "Xander", LastName: "Schauffele", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Patrick", LastName: "Cantlay", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Collin", LastName: "Morikawa", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Justin", LastName: "Thomas", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Jordan", LastName: "Spieth", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Hideki", LastName: "Matsuyama", Status: "professional", CountryCode: "JPN"},
+		{FirstName: "Dustin", LastName: "Johnson", Status: "professional", CountryCode: "USA"},
+		{FirstName: "Matt", LastName: "Fitzpatrick", Status: "professional", CountryCode: "ENG"},
+		{FirstName: "Shane", LastName: "Lowry", Status: "professional", CountryCode: "IRL"},
 	}
 
 	fmt.Println("\nSeeding players...")

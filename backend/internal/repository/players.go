@@ -18,7 +18,7 @@ func NewPlayerRepository(pool *pgxpool.Pool) *PlayerRepository {
 
 func (r *PlayerRepository) GetByID(ctx context.Context, id int) (*models.Player, error) {
 	query := `
-		SELECT id, first_name, last_name, status, country
+		SELECT id, first_name, last_name, status, country_code
 		FROM players
 		WHERE id = $1
 	`
@@ -29,7 +29,7 @@ func (r *PlayerRepository) GetByID(ctx context.Context, id int) (*models.Player,
 		&player.FirstName,
 		&player.LastName,
 		&player.Status,
-		&player.Country,
+		&player.CountryCode,
 	)
 
 	if err != nil {
@@ -42,7 +42,7 @@ func (r *PlayerRepository) GetByID(ctx context.Context, id int) (*models.Player,
 // Retrieves all players
 func (r *PlayerRepository) GetAll(ctx context.Context) ([]models.Player, error) {
 	query := `
-		SELECT id, first_name, last_name, status, country
+		SELECT id, first_name, last_name, status, country_code
 		FROM players
 	`
 
@@ -60,7 +60,7 @@ func (r *PlayerRepository) GetAll(ctx context.Context) ([]models.Player, error) 
 			&player.FirstName,
 			&player.LastName,
 			&player.Status,
-			&player.Country,
+			&player.CountryCode,
 		)
 		if err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func (r *PlayerRepository) GetAll(ctx context.Context) ([]models.Player, error) 
 // Create new record in players table
 func (r *PlayerRepository) Create(ctx context.Context, player *models.Player) error {
 	query := `
-		INSERT INTO players (first_name, last_name, status, country)
+		INSERT INTO players (first_name, last_name, status, country_code)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
@@ -82,7 +82,7 @@ func (r *PlayerRepository) Create(ctx context.Context, player *models.Player) er
 		player.FirstName,
 		player.LastName,
 		player.Status,
-		player.Country,
+		player.CountryCode,
 	).Scan(&player.ID)
 
 	return err
@@ -91,7 +91,7 @@ func (r *PlayerRepository) Create(ctx context.Context, player *models.Player) er
 // Update record in players table
 func (r *PlayerRepository) Update(ctx context.Context, player *models.Player) error {
 	query := `
-		UPDATE players SET first_name=$1, last_name=$2, status=$3, country=$4
+		UPDATE players SET first_name=$1, last_name=$2, status=$3, country_code=$4
 		WHERE id=$5
 	`
 
@@ -99,7 +99,7 @@ func (r *PlayerRepository) Update(ctx context.Context, player *models.Player) er
 		player.FirstName,
 		player.LastName,
 		player.Status,
-		player.Country,
+		player.CountryCode,
 		player.ID,
 	)
 

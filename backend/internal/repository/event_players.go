@@ -40,7 +40,7 @@ func (r *EventPlayerRepository) GetPlayerIDsByEvent(ctx context.Context, eventID
 // GetPlayersByEvent returns full player objects for a given event
 func (r *EventPlayerRepository) GetPlayersByEvent(ctx context.Context, eventID int) ([]models.Player, error) {
 	query := `
-		SELECT p.id, p.first_name, p.last_name, p.status, p.country
+		SELECT p.id, p.first_name, p.last_name, p.status, p.country_code
 		FROM players p
 		INNER JOIN event_players ep ON p.id = ep.player_id
 		WHERE ep.event_id = $1
@@ -60,7 +60,7 @@ func (r *EventPlayerRepository) GetPlayersByEvent(ctx context.Context, eventID i
 			&player.FirstName,
 			&player.LastName,
 			&player.Status,
-			&player.Country,
+			&player.CountryCode,
 		); err != nil {
 			return nil, err
 		}
