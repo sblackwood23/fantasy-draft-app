@@ -27,9 +27,9 @@ Real-time fantasy draft application built as Portfolio Project #1 to demonstrate
 
 ### Frontend
 - **Framework:** React
-- **State Management:** TBD (Context API, Redux, or Zustand)
+- **State Management:** Zustand
 - **Build Tool:** Vite
-- **Styling:** TBD (Tailwind CSS or styled-components)
+- **Styling:** Tailwind CSS
 
 ### Infrastructure
 - **Hosting:** Render.com (or similar cost-effective platform)
@@ -157,14 +157,15 @@ Each event/draft supports configurable rules to accommodate different draft styl
 - [ ] Integration testing for WebSocket flows
 
 ### Phase 3: Frontend Development (Weeks 3-4)
-- [ ] Set up React project with Vite
-- [ ] Create basic routing and layout
-- [ ] Draft room UI with WebSocket connection
+- [x] Set up React project with Vite
+- [x] Create basic routing and layout
+- [x] Draft room UI with WebSocket connection
 - [ ] Player board with search/filter/sort
 - [ ] Team roster display (live updates)
 - [ ] Draft timer and turn indicator
 - [ ] Real-time updates when players are drafted
 - [ ] Visual indicator for auto-drafted picks
+- [ ] Light/dark mode support
 - [ ] Mobile-responsive design
 - [ ] Handle reconnection gracefully
 
@@ -245,9 +246,15 @@ Each event/draft supports configurable rules to accommodate different draft styl
    - `frontend/` will contain React app (src/, package.json, vite.config.js)
    - Clean organization for portfolio presentation
 
-### Still To Decide:
-1. **React State Management:** Context API vs Redux vs Zustand?
-2. **Frontend Styling:** Tailwind CSS vs styled-components?
+### Frontend Stack (Decided - Feb 5, 2026)
+1. **State Management:** Zustand
+   - Lightweight, minimal boilerplate
+   - Great for WebSocket state updates
+   - Simpler than Redux for this use case
+2. **Styling:** Tailwind CSS
+   - Utility-first, rapid prototyping
+   - Built-in responsive design utilities
+   - Easy to iterate without context-switching
 
 ---
 
@@ -279,4 +286,4 @@ Each event/draft supports configurable rules to accommodate different draft styl
 
 ---
 
-**Last Updated:** February 3, 2026
+**Last Updated:** February 5, 2026
