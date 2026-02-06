@@ -16,7 +16,7 @@ interface DraftState {
   totalRounds: number;
   currentPickIndex: number;
   pickOrder: number[];
-  availablePlayers: number[];
+  availablePlayerIDs: number[];
   pickHistory: Pick[];
   turnDeadline: number | null;
   remainingTime: number;
@@ -26,6 +26,7 @@ interface DraftState {
 
   // Actions
   setConnectionStatus: (status: ConnectionStatus) => void;
+  setEventID: (eventID: number) => void;
   handleServerMessage: (message: ServerMessage) => void;
   reset: () => void;
 }
@@ -39,7 +40,7 @@ const initialState = {
   totalRounds: 0,
   currentPickIndex: 0,
   pickOrder: [],
-  availablePlayers: [],
+  availablePlayerIDs: [],
   pickHistory: [],
   turnDeadline: null,
   remainingTime: 0,
@@ -50,6 +51,7 @@ export const useDraftStore = create<DraftState>((set) => ({
   ...initialState,
 
   setConnectionStatus: (status) => set({ connectionStatus: status }),
+  setEventID: (eventID) => set({ eventID }),
 
   handleServerMessage: (message) => {
     switch (message.type) {
@@ -75,7 +77,7 @@ export const useDraftStore = create<DraftState>((set) => ({
           totalRounds: message.totalRounds,
           currentPickIndex: message.currentPickIndex,
           pickOrder: message.pickOrder,
-          availablePlayers: message.availablePlayers,
+          availablePlayerIDs: message.availablePlayers,
           pickHistory: message.pickHistory,
           turnDeadline: message.turnDeadline,
           remainingTime: message.remainingTime,
@@ -95,7 +97,7 @@ export const useDraftStore = create<DraftState>((set) => ({
               autoDraft: message.autoDraft,
             },
           ],
-          availablePlayers: state.availablePlayers.filter(
+          availablePlayerIDs: state.availablePlayerIDs.filter(
             (id) => id !== message.playerID
           ),
         }));

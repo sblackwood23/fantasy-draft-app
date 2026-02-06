@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { joinDraft } from '../api/client';
+import { useDraftStore } from '../store/draftStore';
 
 export function JoinPage() {
   const navigate = useNavigate();
+  const setEventID = useDraftStore((state) => state.setEventID);
   const [teamName, setTeamName] = useState<string>('');
   const [passKey, setPassKey] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +15,11 @@ export function JoinPage() {
     // Clear out error before attempting to join draft
     setError(null);
     joinDraft(teamName, passKey)
-      .then(() => navigate('/draft'))
+      .then((user) => {
+        // Set eventID so we can initialize event players when setting up the draft room
+        setEventID(user.eventID);
+        navigate('/draft');
+      })
       .catch((err: Error) => setError(err.message || 'Failed to join draft'));
   }
 
