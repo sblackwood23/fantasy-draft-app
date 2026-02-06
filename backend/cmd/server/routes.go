@@ -67,4 +67,5 @@ func setupRoutes(r *chi.Mux, db *database.DB, deps *Dependencies) {
 	// Draft room routes (HTTP)
 	r.Post("/events/{id}/draft-room", deps.DraftRoom.CreateDraftRoom)
 	r.Get("/events/{id}/draft-room", deps.DraftRoom.GetDraftRoom)
+	r.Post("/events/{id}/join", deps.DraftRoom.JoinEvent)
 }

@@ -45,7 +45,7 @@ func main() {
 		Player:      handlers.NewPlayerHandler(playerRepo),
 		User:        handlers.NewUserHandler(userRepo),
 		EventPlayer: handlers.NewEventPlayerHandler(eventPlayerRepo),
-		DraftRoom:   handlers.NewDraftRoomHandler(eventPlayerRepo, draftService),
+		DraftRoom:   handlers.NewDraftRoomHandler(eventPlayerRepo, eventRepo, userRepo, draftService),
 		Draft:       draftService,
 	}
 
