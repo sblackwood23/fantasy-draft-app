@@ -15,16 +15,16 @@ const (
 
 // Event represents a draft event with configuration
 type Event struct {
-	ID                 int              `json:"id"`
-	Name               string           `json:"name"`
-	MaxPicksPerTeam    int              `json:"max_picks_per_team"`
-	MaxTeamsPerPlayer  int              `json:"max_teams_per_player"`
-	Stipulations       Stipulations     `json:"stipulations"`
-	Status             string           `json:"status"`
-	Passkey            *string          `json:"passkey,omitempty"`
-	CreatedAt          time.Time        `json:"created_at"`
-	StartedAt          *time.Time       `json:"started_at,omitempty"`
-	CompletedAt        *time.Time       `json:"completed_at,omitempty"`
+	ID                int          `json:"id"`
+	Name              string       `json:"name"`
+	MaxPicksPerTeam   int          `json:"maxPicksPerTeam"`
+	MaxTeamsPerPlayer int          `json:"maxTeamsPerPlayer"`
+	Stipulations      Stipulations `json:"stipulations"`
+	Status            string       `json:"status"`
+	Passkey           *string      `json:"passkey,omitempty"`
+	CreatedAt         time.Time    `json:"createdAt"`
+	StartedAt         *time.Time   `json:"startedAt,omitempty"`
+	CompletedAt       *time.Time   `json:"completedAt,omitempty"`
 }
 
 // Stipulations represents JSONB draft rules stored in events table
@@ -51,27 +51,27 @@ func (s *Stipulations) Scan(value interface{}) error {
 // Player represents a player in the draft pool
 type Player struct {
 	ID          int    `json:"id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
 	Status      string `json:"status"`
-	CountryCode string `json:"country_code"`
+	CountryCode string `json:"countryCode"`
 }
 
 // User represents a team/participant in the draft
 type User struct {
 	ID        int       `json:"id"`
-	EventID   int       `json:"event_id"`
+	EventID   int       `json:"eventID"`
 	Username  string    `json:"username"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // DraftResult represents a pick made during a draft
 type DraftResult struct {
 	ID         int       `json:"id"`
-	EventID    int       `json:"event_id"`
-	UserID     int       `json:"user_id"`
-	PlayerID   int       `json:"player_id"`
-	PickNumber int       `json:"pick_number"`
+	EventID    int       `json:"eventID"`
+	UserID     int       `json:"userID"`
+	PlayerID   int       `json:"playerID"`
+	PickNumber int       `json:"pickNumber"`
 	Round      int       `json:"round"`
-	CreatedAt  time.Time `json:"created_at"`
+	CreatedAt  time.Time `json:"createdAt"`
 }
