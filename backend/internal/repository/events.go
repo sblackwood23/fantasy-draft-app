@@ -152,6 +152,36 @@ func (r *EventRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
+// GetByPasskey retrieves an event by its passkey
+func (r *EventRepository) GetByPasskey(ctx context.Context, passkey string) (*models.Event, error) {
+	query := `
+		SELECT id, name, max_picks_per_team, max_teams_per_player,
+		       stipulations, status, passkey, created_at, started_at, completed_at
+		FROM events
+		WHERE passkey = $1
+	`
+
+	var event models.Event
+	err := r.pool.QueryRow(ctx, query, passkey).Scan(
+		&event.ID,
+		&event.Name,
+		&event.MaxPicksPerTeam,
+		&event.MaxTeamsPerPlayer,
+		&event.Stipulations,
+		&event.Status,
+		&event.Passkey,
+		&event.CreatedAt,
+		&event.StartedAt,
+		&event.CompletedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &event, nil
+}
+
 // UpdateStatus updates only the status field and corresponding timestamp
 // For "in_progress" status, sets started_at to now
 // For "completed" status, sets completed_at to now

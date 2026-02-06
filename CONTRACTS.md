@@ -77,13 +77,13 @@ Base URL: `http://localhost:8080`
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/events/{id}/join` | Join/authenticate for a draft room |
+| POST | `/events/join` | Join/authenticate for a draft room |
 | POST | `/events/{id}/draft-room` | Create a draft room for an event |
 | GET | `/events/{id}/draft-room` | Get draft room state |
 
-#### `POST /events/{id}/join`
+#### `POST /events/join`
 
-Validates passkey and registers/authenticates a user for the draft. Used when entering a draft room.
+Looks up an event by passkey and registers/authenticates a user for the draft. Used when entering a draft room.
 
 **Request:**
 ```json
@@ -96,7 +96,7 @@ Validates passkey and registers/authenticates a user for the draft. Used when en
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `team_name` | string | Yes | The team/username for this draft |
-| `passkey` | string | Yes | The event's passkey for authentication |
+| `passkey` | string | Yes | The event's passkey (used to identify the event) |
 
 **Response (201 Created):** New user registered
 ```json
@@ -123,8 +123,8 @@ Validates passkey and registers/authenticates a user for the draft. Used when en
 | Status | Error | Description |
 |--------|-------|-------------|
 | 400 | `team_name is required` | Missing team_name in request |
-| 401 | `invalid passkey` | Passkey doesn't match event's passkey |
-| 404 | `event not found` | Event ID doesn't exist |
+| 400 | `passkey is required` | Missing passkey in request |
+| 401 | `invalid passkey` | No event found with this passkey |
 | 409 | `draft room is full` | Event already has 12 teams and username doesn't match existing user |
 
 ### Health Check
