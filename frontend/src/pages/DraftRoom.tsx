@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useDraftStore } from '../store/draftStore';
+import { useLocalStore } from '../store/localStore';
 import { usePlayerStore } from '../store/playerStore';
 import { PlayerList } from '../components/PlayerList';
 
@@ -15,7 +16,7 @@ export function DraftRoom() {
 
   // Zustand store selectors - each subscribes to a slice of global state
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
-  const eventID = useDraftStore((s) => s.eventID);
+  const eventID = useLocalStore((s) => s.eventID);
   const draftStatus = useDraftStore((s) => s.draftStatus);
   const currentTurn = useDraftStore((s) => s.currentTurn);
   const roundNumber = useDraftStore((s) => s.roundNumber);

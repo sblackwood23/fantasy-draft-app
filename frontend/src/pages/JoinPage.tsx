@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { joinDraft } from '../api/client';
-import { useDraftStore } from '../store/draftStore';
+import { useLocalStore } from '../store/localStore';
 
 export function JoinPage() {
   const navigate = useNavigate();
-  const setEventID = useDraftStore((state) => state.setEventID);
+  const setEventID = useLocalStore((state) => state.setEventID);
   const [teamName, setTeamName] = useState<string>('');
   const [passKey, setPassKey] = useState<string>('');
   const [error, setError] = useState<string | null>(null);

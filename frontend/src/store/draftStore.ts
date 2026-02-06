@@ -10,7 +10,6 @@ interface DraftState {
 
   // Draft state
   draftStatus: DraftStatus;
-  eventID: number | null;
   currentTurn: number | null;
   roundNumber: number;
   totalRounds: number;
@@ -26,7 +25,6 @@ interface DraftState {
 
   // Actions
   setConnectionStatus: (status: ConnectionStatus) => void;
-  setEventID: (eventID: number) => void;
   handleServerMessage: (message: ServerMessage) => void;
   reset: () => void;
 }
@@ -34,7 +32,6 @@ interface DraftState {
 const initialState = {
   connectionStatus: 'disconnected' as ConnectionStatus,
   draftStatus: 'idle' as DraftStatus,
-  eventID: null,
   currentTurn: null,
   roundNumber: 0,
   totalRounds: 0,
@@ -51,14 +48,12 @@ export const useDraftStore = create<DraftState>((set) => ({
   ...initialState,
 
   setConnectionStatus: (status) => set({ connectionStatus: status }),
-  setEventID: (eventID) => set({ eventID }),
 
   handleServerMessage: (message) => {
     switch (message.type) {
       case 'draft_started':
         set({
           draftStatus: 'in_progress',
-          eventID: message.eventID,
           currentTurn: message.currentTurn,
           roundNumber: message.roundNumber,
           turnDeadline: message.turnDeadline,
@@ -72,7 +67,6 @@ export const useDraftStore = create<DraftState>((set) => ({
                      : message.status === 'paused' ? 'paused'
                      : message.status === 'not_started' ? 'idle'
                      : 'completed',
-          eventID: message.eventID,
           currentTurn: message.currentTurn,
           roundNumber: message.roundNumber,
           totalRounds: message.totalRounds,
@@ -115,7 +109,6 @@ export const useDraftStore = create<DraftState>((set) => ({
       case 'draft_completed':
         set({
           draftStatus: 'completed',
-          eventID: message.eventID,
           totalRounds: message.totalRounds,
         });
         break;
