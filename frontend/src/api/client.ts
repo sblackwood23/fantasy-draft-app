@@ -55,3 +55,7 @@ export async function joinDraft(teamName: string, passkey: string): Promise<User
     body: { teamName, passkey },
   });
 }
+
+export async function getEventPlayers(eventID: number): Promise<Player[]> {
+  return fetchJSON<Player[]>(`/events/${eventID}/players`);
+}

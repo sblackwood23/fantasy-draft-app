@@ -17,7 +17,7 @@ export interface Player {
   first_name: string;
   last_name: string;
   status: string;
-  country: string;
+  countryCode: string;
 }
 
 export interface User {
