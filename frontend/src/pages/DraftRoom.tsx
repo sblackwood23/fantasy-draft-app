@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useDraftStore } from '../store/draftStore';
+import { usePlayerStore } from '../store/playerStore';
+import { PlayerList } from '../components/PlayerList';
 
 export function DraftRoom() {
   // URL query params
@@ -9,17 +11,19 @@ export function DraftRoom() {
   const userId = Number(searchParams.get('userId'));
 
   // Custom hook - WebSocket connection methods
-  const { connect, disconnect, sendMessage } = useWebSocket();
+  const { connect, disconnect } = useWebSocket();
 
   // Zustand store selectors - each subscribes to a slice of global state
   const connectionStatus = useDraftStore((s) => s.connectionStatus);
+  const eventID = useDraftStore((s) => s.eventID);
   const draftStatus = useDraftStore((s) => s.draftStatus);
   const currentTurn = useDraftStore((s) => s.currentTurn);
   const roundNumber = useDraftStore((s) => s.roundNumber);
-  const availablePlayers = useDraftStore((s) => s.availablePlayers);
   const pickHistory = useDraftStore((s) => s.pickHistory);
   const lastError = useDraftStore((s) => s.lastError);
   const turnDeadline = useDraftStore((s) => s.turnDeadline);
+
+  const initializeEventPlayers = usePlayerStore((s) => s.setEventPlayers);
 
   // Effect: connect WebSocket on mount, disconnect on unmount
   useEffect(() => {
@@ -27,17 +31,15 @@ export function DraftRoom() {
     return () => disconnect(); // cleanup function
   }, [connect, disconnect]);
 
+  // Initialize players for the given eventID
+  useEffect(() => {
+    if (eventID !== null) {
+      initializeEventPlayers(eventID)
+    }
+  }, [eventID, initializeEventPlayers])
+
   // Computed value - derived from state, recalculates each render
   const isMyTurn = currentTurn === userId;
-
-  // Event handler
-  const handleMakePick = (playerID: number) => {
-    sendMessage({
-      type: 'make_pick',
-      userID: userId,
-      playerID,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -45,9 +47,6 @@ export function DraftRoom() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Draft Room</h1>
-          <Link to="/" className="text-blue-400 hover:text-blue-300">
-            ← Leave
-          </Link>
         </div>
 
         {/* Connection Status */}
@@ -102,34 +101,9 @@ export function DraftRoom() {
           )}
         </div>
 
-        {/* Available Players */}
-        <div className="mb-4 p-4 bg-gray-800 rounded">
-          <h2 className="font-semibold mb-2">
-            Available Players ({availablePlayers.length})
-          </h2>
-          {availablePlayers.length === 0 ? (
-            <p className="text-gray-400 text-sm">
-              No players loaded. Start a draft to see available players.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {availablePlayers.slice(0, 10).map((playerId) => (
-                <button
-                  key={playerId}
-                  onClick={() => handleMakePick(playerId)}
-                  disabled={!isMyTurn}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm"
-                >
-                  Player #{playerId}
-                </button>
-              ))}
-              {availablePlayers.length > 10 && (
-                <span className="text-gray-400 text-sm px-2 py-1">
-                  +{availablePlayers.length - 10} more
-                </span>
-              )}
-            </div>
-          )}
+        {/* Player List */}
+        <div className="mb-4">
+          <PlayerList />
         </div>
 
         {/* Pick History */}
