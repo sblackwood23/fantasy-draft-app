@@ -19,7 +19,10 @@ export function JoinPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+      <form
+        onSubmit={(e) => { e.preventDefault(); handleJoin(); }}
+        className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full"
+      >
         <h1 className="text-2xl font-bold mb-6 text-center">Join Draft</h1>
 
         <div className="mb-6">
@@ -51,13 +54,13 @@ export function JoinPage() {
         )}
 
         <button
-          onClick={handleJoin}
+          type="submit"
           disabled={!(teamName && passKey)}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition-colors"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition-colors"
         >
-          Join Draft Room
+          Join
         </button>
-      </div>
+      </form>
     </div>
   );
 }
