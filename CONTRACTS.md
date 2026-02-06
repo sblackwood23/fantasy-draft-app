@@ -25,6 +25,7 @@ Base URL: `http://localhost:8080`
   "max_teams_per_player": 1,
   "stipulations": {},
   "status": "pending",
+  "passkey": "secret123",
   "created_at": "2024-01-01T00:00:00Z",
   "started_at": null,
   "completed_at": null
@@ -66,10 +67,65 @@ Base URL: `http://localhost:8080`
 ```json
 {
   "id": 1,
+  "event_id": 1,
   "username": "team_alpha",
   "created_at": "2024-01-01T00:00:00Z"
 }
 ```
+
+### Draft Room
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/events/{id}/join` | Join/authenticate for a draft room |
+| POST | `/events/{id}/draft-room` | Create a draft room for an event |
+| GET | `/events/{id}/draft-room` | Get draft room state |
+
+#### `POST /events/{id}/join`
+
+Validates passkey and registers/authenticates a user for the draft. Used when entering a draft room.
+
+**Request:**
+```json
+{
+  "team_name": "Team Alpha",
+  "passkey": "secret123"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `team_name` | string | Yes | The team/username for this draft |
+| `passkey` | string | Yes | The event's passkey for authentication |
+
+**Response (201 Created):** New user registered
+```json
+{
+  "id": 1,
+  "event_id": 1,
+  "username": "Team Alpha",
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
+
+**Response (200 OK):** Existing user (reconnection)
+```json
+{
+  "id": 1,
+  "event_id": 1,
+  "username": "Team Alpha",
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
+
+**Error Responses:**
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | `team_name is required` | Missing team_name in request |
+| 401 | `invalid passkey` | Passkey doesn't match event's passkey |
+| 404 | `event not found` | Event ID doesn't exist |
+| 409 | `draft room is full` | Event already has 12 teams and username doesn't match existing user |
 
 ### Health Check
 
