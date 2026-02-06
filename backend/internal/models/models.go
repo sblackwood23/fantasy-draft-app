@@ -21,7 +21,7 @@ type Event struct {
 	MaxTeamsPerPlayer  int              `json:"max_teams_per_player"`
 	Stipulations       Stipulations     `json:"stipulations"`
 	Status             string           `json:"status"`
-	Passkey            *string          `json:"passkey,omitempty"`
+	Passkey            string           `json:"passkey"`
 	CreatedAt          time.Time        `json:"created_at"`
 	StartedAt          *time.Time       `json:"started_at,omitempty"`
 	CompletedAt        *time.Time       `json:"completed_at,omitempty"`
@@ -60,6 +60,7 @@ type Player struct {
 // User represents a team/participant in the draft
 type User struct {
 	ID        int       `json:"id"`
+	EventID   int       `json:"event_id"`
 	Username  string    `json:"username"`
 	CreatedAt time.Time `json:"created_at"`
 }
