@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from "react";
-import { usePlayerStore } from "../store/playerStore";
+import { useEffect, useRef, useState } from "react";
 import { useDraftStore } from "../store/draftStore";
-import type { Player } from "../types";
+import { usePlayerStore } from "../store/playerStore";
+import type { Player, PlayerSort } from "../types";
 
 export function PlayerList() {
+  // State properties
   const [searchFilter, setSearchFilter] = useState<string>('');
+  const [sortConfig, setSortConfig] = useState<PlayerSort | null>(null);
   const [countryCodeFilter, setCountryCodeFilter] = useState<string[] | null>(null);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [playerFilter, setPlayerFilter] = useState<'available' | 'drafted' | 'all'>('available');
@@ -21,22 +23,49 @@ export function PlayerList() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  /**
+   * All players in the field for the event.
+   */
   const eventPlayers = usePlayerStore((s) => s.eventPlayers);
+
+  /**
+   * The IDs of all players who have yet been drafted.
+   */
   const availablePlayerIDs = useDraftStore((s) => s.availablePlayerIDs);
-  // null = no draft data yet, all players are available
+
+  /**
+   * The array of Player objects who have yet been drafted.
+   * When availablePlayerIDs is null, that means no draft data yet and all players are available.
+   */
   const availablePlayers = availablePlayerIDs === null
     ? eventPlayers
     : eventPlayers.filter((p) => availablePlayerIDs.some((id) => id === p.id));
+
+  /**
+   * The array of drafted players. Computed as the complement of availablePlayers.
+   */
   const draftedPlayers = availablePlayerIDs === null
     ? []
     : eventPlayers.filter((p) => !availablePlayerIDs.some((id) => id === p.id));
 
+  /**
+   * The array of players as rendered in the UI.
+   */
   const displayedPlayers = getDisplayedPlayers();
 
+  /**
+   * Resolves the list of players and the order in which to display them.
+   * Derived from:
+   * - search filter value
+   * - country code filter value
+   * - applied sort
+   * 
+   * @returns The ordered list of players to show in the UI.
+   */
   function getDisplayedPlayers(): Player[] {
     let players = playerFilter === 'all' ? eventPlayers
       : playerFilter === 'drafted' ? draftedPlayers
-      : availablePlayers;
+        : availablePlayers;
 
     if (searchFilter) {
       const query = searchFilter.toLowerCase();
@@ -47,6 +76,16 @@ export function PlayerList() {
 
     if (countryCodeFilter && countryCodeFilter.length > 0) {
       players = players.filter((p) => countryCodeFilter.includes(p.countryCode));
+    }
+
+    if (sortConfig) {
+      // Copy the array so that we don't mutate the original array on sort
+      let playersCopy = [...players];
+      if (sortConfig.sortField === 'name') {
+        players = [...playersCopy.sort((a, b) => sortPlayers(a.lastName, b.lastName))];
+      } else if (sortConfig.sortField === 'countryCode') {
+        players = [...playersCopy.sort((a, b) => sortPlayers(a.countryCode, b.countryCode))];
+      }
     }
 
     return players;
@@ -64,6 +103,36 @@ export function PlayerList() {
       }
       return [...prev, code];
     });
+  }
+
+
+  /**
+   * Toggles the sort state of a given field.
+   * 
+   * @param field Field to toggle sort against
+   */
+  function toggleSort(field: 'name' | 'countryCode') {
+    if (sortConfig?.sortField !== field) {
+      // When setting sort for a new field, default the order to ascending
+      setSortConfig({ sortDirection: 'asc', sortField: field });
+    } else if (sortConfig?.sortDirection === 'asc') {
+      // When toggling sort on the same field, move from ascending to descending
+      setSortConfig({ sortDirection: 'desc', sortField: field });
+    } else {
+      // When toggling sort on same field with order 'desc', clear out the sort
+      setSortConfig(null);
+    }
+  }
+
+  function sortPlayers(fieldA: string, fieldB: string): number {
+    const ascending = sortConfig?.sortDirection === 'asc';
+    if (fieldA < fieldB) {
+      return ascending ? -1 : 1;
+    } else if (fieldA > fieldB) {
+      return ascending ? 1 : -1;
+    } else {
+      return 0;
+    }
   }
 
   return (
@@ -90,58 +159,58 @@ export function PlayerList() {
           className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
         />
 
-      {countryCodes.length > 0 && (
-        <div className="relative w-48" ref={countryDropdownRef}>
-          <button
-            onClick={() => setCountryDropdownOpen((prev) => !prev)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm text-left flex items-center justify-between"
-          >
-            <span className={`truncate ${countryCodeFilter ? 'text-white' : 'text-gray-400'}`}>
-              {countryCodeFilter
-                ? countryCodeFilter.join(', ')
-                : 'Filter by country'}
-            </span>
-            <span className="text-gray-400 text-xs">{countryDropdownOpen ? '\u25B2' : '\u25BC'}</span>
-          </button>
-          {countryDropdownOpen && (
-            <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto">
-              {countryCodeFilter && (
-                <div className="flex border-b border-gray-600">
-                  <button
-                    onClick={() => setCountryCodeFilter(null)}
-                    className="flex-1 px-3 py-2 text-sm text-red-400 hover:bg-gray-600 text-left"
+        {countryCodes.length > 0 && (
+          <div className="relative w-48" ref={countryDropdownRef}>
+            <button
+              onClick={() => setCountryDropdownOpen((prev) => !prev)}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm text-left flex items-center justify-between"
+            >
+              <span className={`truncate ${countryCodeFilter ? 'text-white' : 'text-gray-400'}`}>
+                {countryCodeFilter
+                  ? countryCodeFilter.join(', ')
+                  : 'Filter by country'}
+              </span>
+              <span className="text-gray-400 text-xs">{countryDropdownOpen ? '\u25B2' : '\u25BC'}</span>
+            </button>
+            {countryDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto">
+                {countryCodeFilter && (
+                  <div className="flex border-b border-gray-600">
+                    <button
+                      onClick={() => setCountryCodeFilter(null)}
+                      className="flex-1 px-3 py-2 text-sm text-red-400 hover:bg-gray-600 text-left"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={() => {
+                        const inverted = countryCodes.filter((c) => !countryCodeFilter.includes(c));
+                        setCountryCodeFilter(inverted.length > 0 ? inverted : null);
+                      }}
+                      className="flex-1 px-3 py-2 text-sm text-blue-400 hover:bg-gray-600 text-left"
+                    >
+                      Invert
+                    </button>
+                  </div>
+                )}
+                {countryCodes.map((code) => (
+                  <label
+                    key={code}
+                    className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-600 cursor-pointer"
                   >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => {
-                      const inverted = countryCodes.filter((c) => !countryCodeFilter.includes(c));
-                      setCountryCodeFilter(inverted.length > 0 ? inverted : null);
-                    }}
-                    className="flex-1 px-3 py-2 text-sm text-blue-400 hover:bg-gray-600 text-left"
-                  >
-                    Invert
-                  </button>
-                </div>
-              )}
-              {countryCodes.map((code) => (
-                <label
-                  key={code}
-                  className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-600 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={countryCodeFilter?.includes(code) ?? false}
-                    onChange={() => toggleCountryCode(code)}
-                    className="rounded"
-                  />
-                  {code}
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                    <input
+                      type="checkbox"
+                      checked={countryCodeFilter?.includes(code) ?? false}
+                      onChange={() => toggleCountryCode(code)}
+                      className="rounded"
+                    />
+                    {code}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {displayedPlayers.length === 0 ? (
@@ -151,8 +220,18 @@ export function PlayerList() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-gray-800">
               <tr className="text-left text-gray-400 border-b border-gray-700">
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Country</th>
+                <th className="pb-2">
+                  <button onClick={() => toggleSort('name')} className="relative hover:text-white">
+                    Name
+                    {sortConfig?.sortField === 'name' && <span className="absolute -right-3 top-1/2 -translate-y-1/2 text-[10px] text-blue-400">{sortConfig.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                  </button>
+                </th>
+                <th className="pb-2">
+                  <button onClick={() => toggleSort('countryCode')} className="relative hover:text-white">
+                    Country
+                    {sortConfig?.sortField === 'countryCode' && <span className="absolute -right-3 top-1/2 -translate-y-1/2 text-[10px] text-blue-400">{sortConfig.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}</span>}
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>

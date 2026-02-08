@@ -37,6 +37,16 @@ export interface Pick {
   autoDraft: boolean;
 }
 
+// Player List Sorting
+
+export type PlayerSortField = 'name' | 'countryCode';
+export type SortDirection = 'asc' | 'desc';
+
+export interface PlayerSort {
+  sortField: PlayerSortField | null;
+  sortDirection: SortDirection | null;
+}
+
 // WebSocket Messages: Client -> Server
 
 export interface StartDraftMessage {
